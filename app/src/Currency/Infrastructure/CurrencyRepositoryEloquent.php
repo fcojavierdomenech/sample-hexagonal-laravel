@@ -1,6 +1,6 @@
 <?php
 
-namespace Currency\Infrastructure;
+namespace App\src\Currency\Infrastructure;
 
 use App\src\Currency\Domain\CurrencyNotFoundException;
 use App\src\Currency\Domain\Currency;
@@ -12,7 +12,7 @@ use App\src\Currency\Domain\CurrencyRepositoryInterface;
 /**
  * Class CurrencyRepositoryEloquent
  */
-class CurrencyRepositoryEloquent extends CurrencyRepositoryInterface
+class CurrencyRepositoryEloquent implements CurrencyRepositoryInterface
 {
     protected $model;
 
@@ -21,21 +21,24 @@ class CurrencyRepositoryEloquent extends CurrencyRepositoryInterface
         $this->model = $currency;
     }
 
-    public function create(array $data)
+    public function create(array $data): Currency
     {
         return $this->model->create($data);
     }
 
-    public function delete($currencyId)
+    public function delete(int $currencyId)
     {
         return $this->model->destroy($currencyId);
     }
 
-    public function find($currencyId)
+    public function find(int $currencyId): ?Currency
     {
-        if (null == $currency = $this->model->find($currencyId)) {
-            throw new CurrencyNotFoundException();
-        }
+        return $this->model->find($currencyId);
+    }
+
+    public function findByCountryId(int $countryId): ?Currency
+    {
+        $currency = $this->model->where('country_id', $countryId)->first();
 
         return $currency;
     }

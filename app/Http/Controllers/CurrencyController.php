@@ -2,12 +2,42 @@
 
 namespace App\Http\Controllers;
 
+use App\src\Currency\Application\CreateCurrencyService;
+use App\src\Currency\Application\DeleteCurrencyService;
+use App\src\Currency\Application\FindCurrencyService;
 use App\src\Currency\Domain\Currency;
+use App\src\Currency\Domain\CurrencyNotFoundException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 
 class CurrencyController extends Controller
 {
+    /**
+     * @var CreateCurrencyService
+     */
+    private $currencyCreator;
+
+    /**
+     * @var FindCurrencyService
+     */
+    private $currencyFinder;
+
+    /**
+     * @var DeleteCurrencyService
+     */
+    private $currencyDeleter;
+
+
+    public function __construct(
+        CreateCurrencyService $currencyCreator,
+        FindCurrencyService $currencyFinder,
+        DeleteCurrencyService $currencyDeleter
+    ) {
+        $this->currencyCreator = $currencyCreator;
+        $this->currencyFinder = $currencyFinder;
+        $this->currencyDeleter = $currencyDeleter;
+    }
+    
     /**
      * Store a newly created resource in storage.
      *
@@ -20,14 +50,10 @@ class CurrencyController extends Controller
             'country_id' => 'required'
         ]);
 
-        $currency = new Currency([
-            'currency' => $request->post('currency'),
-            'country_id' => $request->post('country_id')
-            ]);
-
-        $currency->save();
-
-        return response('Success creating the currency', 200);
+        return $this->currencyCreator->__invoke(
+            $request->post('currency'),
+            $request->post('country_id')
+        );
     }
 
     /**
@@ -37,11 +63,7 @@ class CurrencyController extends Controller
      */
     public function getCurrency(int $currencyId)
     {
-        if (null == $currency = Currency::find($currencyId)) {
-            throw new ModelNotFoundException('Currency not found');
-        }
-
-        return $currency;
+        return $this->currencyFinder->__invoke($currencyId);
     }
 
     /**
@@ -55,14 +77,11 @@ class CurrencyController extends Controller
             'id' => 'required'
         ]);
 
-        $currencyId = $request->post('id');
-
-        if (null == $currency = Currency::find($currencyId)) {
-            throw new CurrencyNotFoundException();
+        try {
+            $this->currencyDeleter->__invoke($request->post('id'));
+        } catch (CurrencyNotFoundException $e) {
+            return response('Resource not found', 404);
         }
-
-        /** @var Currency $currency */
-        $currency->delete();
 
         return response('Success deleting the currency', 200);
     }

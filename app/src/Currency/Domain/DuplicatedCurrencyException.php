@@ -4,12 +4,11 @@ namespace App\src\Currency\Domain;
 
 use Exception;
 
-class CurrencyNotFoundException extends Exception
+class DuplicatedCurrencyException extends Exception
 {
     public function __construct()
     {
         parent::__construct();
-        $this->message = 'Currency not found';
-        $this->code = 404;
+        $this->message = 'The currency for the given country already exists';
     }
 }
